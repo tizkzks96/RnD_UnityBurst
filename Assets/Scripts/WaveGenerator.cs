@@ -31,6 +31,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Jobs;
+using Unity.Collections;
+using Unity.Burst;
+using Unity.Jobs;
+using Unity.Mathematics;
 
 public class WaveGenerator : MonoBehaviour
 {
@@ -43,23 +48,80 @@ public class WaveGenerator : MonoBehaviour
     public MeshFilter waterMeshFilter;
     private Mesh waterMesh;
 
+    private NativeArray<Vector3> waterVertices;
+    private NativeArray<Vector3> waterNormals;
+
+    JobHandle meshModificationJobHandle; // 1 
+    UpdateMeshJob meshModificationJob;
+
     private void Start()
     {
-        
+        waterMesh = waterMeshFilter.mesh;
+        waterMesh.MarkDynamic();
+
+        waterVertices = new NativeArray<Vector3>(waterMesh.vertices, Allocator.Persistent);
+        waterNormals = new NativeArray<Vector3>(waterMesh.normals, Allocator.Persistent);
+
     }
 
     private void Update()
     {
-       
+        meshModificationJob = new UpdateMeshJob()
+        {
+            vertices = waterVertices,
+            normals = waterNormals,
+            offsetSpeed = waveOffsetSpeed,
+            time = Time.time,
+            scale = waveScale,
+            height = waveHeight
+        }; // 2 
+        meshModificationJobHandle =
+        meshModificationJob.Schedule(waterVertices.Length, 64);
     }
 
     private void LateUpdate()
     {
-      
+        meshModificationJobHandle.Complete(); // 2 
+        waterMesh.SetVertices(meshModificationJob.vertices); // 3 
+        waterMesh.RecalculateNormals();
     }
 
     private void OnDestroy()
     {
-        
+        waterVertices.Dispose();
+        waterNormals.Dispose();
+    }
+
+    [BurstCompile]
+    public struct UpdateMeshJob : IJobParallelFor
+    {
+        public NativeArray<Vector3> vertices;
+
+        [ReadOnly]
+        public NativeArray<Vector3> normals;
+
+        public float offsetSpeed;
+        public float scale;
+        public float height;
+
+        public float time;
+        public void Execute(int i)
+        {
+            if (normals[i].z > 0f)
+            {
+                var vertex = vertices[i];
+                float noiseValue =
+                    Noise(vertex.x * scale + offsetSpeed * time, vertex.y * scale + offsetSpeed * time);
+
+                vertices[i] =
+    new Vector3(vertex.x, vertex.y, noiseValue * height + 0.3f);
+            }
+        }
+
+        private float Noise(float x, float y)
+        {
+            float2 pos = math.float2(x, y);
+            return noise.snoise(pos);
+        }
     }
 }
