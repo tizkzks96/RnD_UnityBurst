@@ -472,14 +472,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40380ac0a6b4ca1499911c5811f91143, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waterObject: {fileID: 0}
-  objectPrefab: {fileID: 0}
-  amountOfFish: 0
-  spawnBounds: {x: 0, y: 0, z: 0}
+  waterObject: {fileID: 5003363733161471690}
+  objectPrefab: {fileID: 8816889875483111277, guid: 2b9d52ba341f12549bbad904668b74fc, type: 3}
+  amountOfFish: 5000
+  spawnBounds: {x: 470, y: 47, z: 470}
   spawnHeight: 0
-  swimChangeFrequency: 0
-  swimSpeed: 0
-  turnSpeed: 0
+  swimChangeFrequency: 250
+  swimSpeed: 30
+  turnSpeed: 4.5
 --- !u!114 &6900533880000668857
 MonoBehaviour:
   m_ObjectHideFlags: 0
